@@ -135,7 +135,7 @@ int readViewHistory(ViewHistory history[]){
     ifstream InFile;
     int usersID2, i;
     string moviesID2;
-    string viewDate;
+    Date viewDate;
     int ratings;
 
     InFile.open("ViewHistory.txt");
@@ -146,7 +146,6 @@ int readViewHistory(ViewHistory history[]){
     }
  i=0;
     InFile >> usersID2;							
-	string viewDate= Date viewDate;
     while (usersID2 != 0) {				
      InFile >> moviesID2;
      InFile >> viewDate;
