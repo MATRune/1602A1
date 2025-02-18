@@ -1,15 +1,15 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <iomanip>
 
 using namespace std;
-
-
 
 // Maximum number of records
 const int MAX_MOVIES = 100;
 const int MAX_USERS = 100;
 const int MAX_HISTORY = 500;
+
 
 // Struct Definitions
 struct Date {
@@ -46,127 +46,100 @@ struct ViewHistory {
 // Functions required
 
 void displayDate(Date date) {
-
+	cout << setw(2) << setfill('0') << date.day << "/" << setw(2) << setfill('0') << date.month << "/" << date.year << endl;
 }
 
 
 
 void displayMovie(Movie movie){
-
+	
+	cout<<"Movie ID:"<<movie.movieID<<endl;
+	cout<<"Title:"<<movie.title<<endl;
+	cout<<"Genre:"<<movie.genre<<endl;
+	cout<<"Director:"<<movie.director<<endl;
+	
 }
 
 
-
 void displayUser(User user){
-
+	cout<<"Uset ID:"<<user.userID<<endl;
+	cout<<"Username:"<<user.userName<<endl;
+	cout<<"Subscription Type:"<<user.subscriptionType<<endl;
 }
 
 
 
 int readMovies(Movie movies[]){
-    ifstream InFile;
-    string movID, movTitle, movGen, movDir;
-    int i;
-
-    InFile.open("Movies.txt");
-
-    if (!InFile.is_open()) {
-        cout << "Input file, Movies.txt, could not be opened. Aborting ..." << endl;
-        exit(1);
-    }
- i=0;
-    InFile >> movID;							
-	
-    while (movID != "END") {				
-     InFile >> movTitle;
-     InFile >> movGen;
-     InFile >> movDir;	
-     movies[i].movieID = movID;				
-     movies[i].title = movTitle;		
-     movies[i].genre = movGen;		
-     movies[i].director = movDir;					
-     i = i + 1;							
-     InFile >> movID;			
- }	
-
- InFile.close();		
+	ifstream inFile;
+	inFile.open("Movies.txt");
+	    
+    int count = 0;
+    inFile >> movies[count].movieID;
     
-
-    return 0; //delete after writing code
+    while(movies[count].movieID != "END"){
+    	inFile >> movies[count].title;
+		inFile >> movies[count].genre;
+		inFile >> movies[count].director;
+		
+		count++;
+		
+		inFile >> movies[count].movieID;
+	}
+    inFile.close();
+	return count;
 }
-
 
 
 int readUsers(User users[]){
-    ifstream InFile;
-    int usersID;
-    string usersName, usersSubType;
-    int i;
-
-    InFile.open("Users.txt");
-
-    if (!InFile.is_open()) {
-        cout << "Input file, Users.txt, could not be opened. Aborting ..." << endl;
-        exit(1);
-    }
- i=0;
-    InFile >> usersID;							
+	ifstream inFile;
+	inFile.open("Users.txt");
 	
-    while (usersID != 0) {				
-     InFile >> usersName;
-     InFile >> usersSubType;
-     users[i].userID = usersID;				
-     users[i].userName = usersName;		
-    users[i].subscriptionType = usersSubType;		
-    					
-     i = i + 1;							
-     InFile >> usersID;			
- }	
-
- InFile.close();		
-
-
-    return 0; //delete after writing code
+	int count = 0;
+	inFile >> users[count].userID;
+	
+	while(users[count].userID != 0){
+    	inFile >> users[count].userName;
+		inFile >> users[count].subscriptionType;
+		
+		count++;
+		
+		inFile >> users[count].userID;
+	}
+	inFile.close();
+    return count;
 }
-
 
 
 int readViewHistory(ViewHistory history[]){
-    ifstream InFile;
-    int usersID2, i;
-    string moviesID2;
-    Date viewDate;
-    int ratings;
-
-    InFile.open("ViewHistory.txt");
-
-    if (!InFile.is_open()) {
-        cout << "Input file, ViewHistory.txt, could not be opened. Aborting ..." << endl;
-        exit(1);
-    }
- i=0;
-    InFile >> usersID2;							
-    while (usersID2 != 0) {				
-     InFile >> moviesID2;
-     InFile >> viewDate;
-     InFile >> ratings;
-     history[i].userID = usersID2;				
-     history[i].movieID = moviesID2;
-     history[i].viewDate = viewDate;		
-    history[i].rating = ratings;		
-    					
-     i = i + 1;							
-     InFile >> usersID2;			
- }	
-
- InFile.close();		
-
+	ifstream inFile;
+	inFile.open("ViewHistory.txt");
+	
+	int count = 0;
+	char slash = '/';
+	inFile >> history[count].userID;
+	
+	while(history[count].userID != 0){
+    	inFile >> history[count].movieID;
+		inFile >> history[count].viewDate.day >> slash >> history[count].viewDate.month >> slash >> history[count].viewDate.year;
+		inFile >> history[count].rating;
+		
+		count++;
+		
+		inFile >> history[count].userID;
+	}
+	inFile.close();
+    return count;
+	
     return 0; //delete after writing code
 }
 
 
-
 int findMovie(Movie movies[], int numMovies, string movieID){
+	
+	
+	
+	
+	
     return 0; //delete after writing code
 }
 
@@ -221,5 +194,21 @@ void displayUserRatings(ViewHistory history[], int numViews, int userID){
 
 
 int main() {
-    return 0;
+	
+	Movie movies[MAX_MOVIES]; // Array to store movies
+	User users[MAX_USERS]; // Array used to store users
+	ViewHistory history[MAX_HISTORY]; // Array used to store the history
+	 
+	int Moviecount = readMovies(movies);
+	int Usercount = readUsers(users);
+	int Histcount = readViewHistory(history);
+	
+	cout << "Number of movies read = " << Moviecount;
+	cout << endl;
+	cout << "Number of users = " << Usercount;
+	cout << endl;
+	cout << "Number of movies watched = " << Histcount;
+	
+	return 0;
 }
+
