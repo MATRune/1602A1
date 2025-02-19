@@ -1,0 +1,522 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+
+using namespace std;
+
+// Maximum number of records
+const int MAX_MOVIES = 100;
+const int MAX_USERS = 100;
+const int MAX_HISTORY = 500;
+
+// Struct Definitions
+struct Date {
+    int day;
+    int month;
+    int year;
+};
+
+struct Movie {
+    string movieID;
+    string title;
+    string genre;
+    string director;
+};
+
+struct User {
+    int userID;
+    string userName;
+    string subscriptionType;
+};
+
+struct ViewHistory {
+    int userID;
+    string movieID;
+    Date viewDate;
+    int rating;
+};
+
+// Functions required
+
+void displayDate(Date date) {
+    cout << date.day << "/" << date.month << "/" << date.year;
+}
+
+void displayMovie(Movie movie) {
+    cout << "----------------------------------------" << endl;
+    cout << "Movie ID: " << movie.movieID << endl;
+    cout << "Title: " << movie.title << endl;
+    cout << "Genre: " << movie.genre << endl;
+    cout << "Director: " << movie.director << endl;
+    cout << "----------------------------------------" << endl;
+}
+
+void displayUser(User user) {
+    cout << "----------------------------------------" << endl;
+    cout << "User ID: " << user.userID << endl;
+    cout << "Name: " << user.userName << endl;
+    cout << "Subscription: " << user.subscriptionType << endl;
+    cout << "----------------------------------------" << endl;
+}
+
+int readMovies(Movie movies[]) {
+    ifstream infile("Movies.txt");
+    string movID, movTitle, movGen, movDir;
+    int i = 0;
+
+    if (!infile.is_open()) {
+        cout << "[Error] Could not open Movies.txt. Aborting ..." << endl;
+        return 0;
+    }
+
+    infile >> movID;
+
+    while (movID != "END") {
+        infile >> movTitle >> movGen >> movDir;
+        movies[i].movieID = movID;
+        movies[i].title = movTitle;
+        movies[i].genre = movGen;
+        movies[i].director = movDir;
+        i = i + 1;
+        infile >> movID;
+    }
+
+    infile.close();
+    return i; // Number of movies read
+}
+
+int readUsers(User users[]) {
+    ifstream infile("Users.txt");
+    int userID, i;
+    string userName, subscriptionType;
+
+    if (!infile.is_open()) {
+        cout << "[Error] Could not open Users.txt. Aborting ..." << endl;
+        return 0;
+    }
+
+    i = 0;
+    infile >> userID;
+
+    while (userID != 0) {
+        infile >> userName >> subscriptionType;
+        users[i].userID = userID;
+        users[i].userName = userName;
+        users[i].subscriptionType = subscriptionType;
+        i = i + 1;
+        infile >> userID;
+    }
+
+    infile.close();
+    return i; // Number of users read
+}
+
+int readViewHistory(ViewHistory history[]) {
+    ifstream infile("ViewHistory.txt");
+    int userID, rating, i;
+    string movieID;
+    char slash;
+
+    if (!infile.is_open()) {
+        cout << "[Error] Could not open ViewHistory.txt. Aborting ..." << endl;
+        return 0;
+    }
+
+    i = 0;
+    infile >> userID;
+
+    while (userID != 0) {
+        infile >> movieID;
+        infile >> history[i].viewDate.day >> slash >> history[i].viewDate.month >> slash >> history[i].viewDate.year;
+        infile >> rating;
+
+        history[i].userID = userID;
+        history[i].movieID = movieID;
+        history[i].rating = rating;
+
+        i = i + 1;
+        infile >> userID;
+    }
+
+    infile.close();
+    return i; // Number of view history records read
+}
+
+int findMovie(Movie movies[], int numMovies, string movieID) {
+    int i = 0;
+
+    while (i < numMovies) {
+        if (movies[i].movieID == movieID) {
+            return i; // Found movie, return index
+        }
+        i = i + 1;
+    }
+
+    return -1; // Movie not found
+}
+
+int findUser(User users[], int numUsers, string userName) {
+    int i;
+    i = 0;
+
+    while (i < numUsers) {
+        if (users[i].userName == userName) {
+            return i; // Found user, return index
+        }
+        i = i + 1;
+    }
+
+    return -1; // User not found
+}
+
+bool findMovieView(ViewHistory history[], int numViews, string movieID) {
+    int i;
+    i = 0;
+
+    while (i < numViews) {
+        if (history[i].movieID == movieID) {
+            return true; // Movie has been watched at least once
+        }
+        i = i + 1;
+    }
+
+    return false; // Movie has never been watched
+}
+
+int totalMovieViews(ViewHistory history[], int numViews, string movieID) {
+    int i, count;
+    i = 0;
+    count = 0;
+
+    while (i < numViews) {
+        if (history[i].movieID == movieID) {
+            count = count + 1; // Increment count if movieID matches
+        }
+        i = i + 1;
+    }
+
+    return count; // Total number of times the movie was watched
+}
+
+void displayUserHistory(ViewHistory history[], int numViews, int userID) {
+    int i, found;
+    i = 0;
+    found = 0;
+
+	cout << " " << endl;
+    cout << "========================================" << endl;
+    cout << "Movies Watched by User " << userID << ":" << endl;
+    cout << "========================================" << endl;
+    cout << " " << endl;
+
+    while (i < numViews) {
+        if (history[i].userID == userID) {
+            cout << "- " << history[i].movieID << " on ";
+            displayDate(history[i].viewDate);
+            cout << ", Rated: ";
+
+            if (history[i].rating == 0) {
+                cout << "Not Rated" << endl;
+            } else {
+                cout << history[i].rating << endl;
+            }
+            found = 1;
+        }
+        i = i + 1;
+    }
+
+    if (found == 0) {
+        cout << "[Error] No watch history found for user " << userID << "." << endl;
+    }
+    cout << "========================================" << endl;
+    cout << " " << endl;
+}
+
+void displayMostWatchedMovie(ViewHistory history[], int numViews, Movie movies[], int numMovies) {
+    int i, maxViews, mostWatchedIndex;
+    i = 0;
+    maxViews = 0;
+    mostWatchedIndex = -1;
+
+    while (i < numMovies) {
+        int views;
+        views = totalMovieViews(history, numViews, movies[i].movieID);
+
+        if (views > maxViews) {
+            maxViews = views;
+            mostWatchedIndex = i;
+        }
+        i = i + 1;
+    }
+
+    if (mostWatchedIndex != -1) {
+    	cout << " " << endl;
+        cout << "========================================" << endl;
+        cout << "The most watched movie is:" << endl;
+        cout << "========================================" << endl;
+        cout << " " << endl;
+        displayMovie(movies[mostWatchedIndex]);
+    } else {
+        cout << "[Error] No movies have been watched." << endl;
+        cout << " " << endl;
+    }
+}
+
+void displayMoviesGenre(Movie movies[], int numMovies, string genre) {
+    int i, count;
+    i = 0;
+    count = 0;
+     
+	cout << " " << endl;
+    cout << "========================================" << endl;
+    cout << "Movies in the " << genre << " genre:" << endl;
+    cout << "========================================" << endl;
+    cout << " " << endl;
+
+    while (i < numMovies) {
+        if (movies[i].genre == genre) {
+            cout << "- " << movies[i].title << endl;
+            count = count + 1;
+        }
+        i = i + 1;
+    }
+
+    if (count == 0) {
+        cout << "[Error] No movies found in the " << genre << " genre." << endl;
+    } else {
+    	cout << " " << endl;
+        cout << "----------------------------------------" << endl;
+        cout << "Total movies in " << genre << " genre: " << count << endl;
+    }
+    cout << "========================================" << endl;
+    cout << " " << endl;
+}
+
+void displayMovieRatings(ViewHistory history[], int numViews, string movieID) {
+    int i, count, totalRating;
+    i = 0;
+    count = 0;
+    totalRating = 0;
+    
+	cout << " " << endl;
+    cout << "========================================" << endl;
+    cout << "Movie Ratings and Average Rating for " << movieID << ":" << endl;
+    cout << "========================================" << endl;
+    cout << " " << endl;
+
+    while (i < numViews) {
+        if (history[i].movieID == movieID) {
+            cout << "- ";
+            displayDate(history[i].viewDate);
+            cout << ", Rated: ";
+
+            if (history[i].rating == 0) {
+                cout << "Not Rated" << endl;
+            } else {
+                cout << history[i].rating << endl;
+                totalRating = totalRating + history[i].rating;
+                count = count + 1;
+            }
+        }
+        i = i + 1;
+    }
+
+    if (count == 0) {
+        cout << "[Error] No ratings found for movie " << movieID << "." << endl;
+        cout << " " << endl;
+    } else {
+    	
+    	cout << " " << endl;
+        cout << "----------------------------------------" << endl;
+        cout << "Average Rating: " << (totalRating * 1.0 / count) << endl;
+    }
+    cout << "========================================" << endl;
+    cout << " " << endl;
+}
+
+void displayUserRatings(ViewHistory history[], int numViews, int userID) {
+    int i, count, totalRating;
+    i = 0;
+    count = 0;
+    totalRating = 0;
+
+	cout << " " << endl;
+    cout << "========================================" << endl;
+    cout << "Ratings by User " << userID << ":" << endl;
+    cout << "========================================" << endl;
+    cout << " " << endl;
+
+    while (i < numViews) {
+        if (history[i].userID == userID && history[i].rating != 0) {
+            cout << "- " << history[i].movieID << " Rated: " << history[i].rating << endl;
+            totalRating = totalRating + history[i].rating;
+            count = count + 1;
+        }
+        i = i + 1;
+    }
+
+    if (count == 0) {
+        cout << "[Error] User " << userID << " has not given any ratings." << endl;
+        cout << " " << endl;
+    } else {
+        cout << "----------------------------------------" << endl;
+        cout << "Average Rating: " << (totalRating * 1.0 / count) << endl;
+    }
+    cout << "========================================" << endl;
+    cout << " " << endl;
+}
+
+int main() {
+    Movie movies[MAX_MOVIES];
+    User users[MAX_USERS];
+    ViewHistory history[MAX_HISTORY];
+
+    cout << "Reading data from Movies file ..." << endl;
+    int numMovies = readMovies(movies);
+    cout << "-> Data for " << numMovies << " movie(s) read." << endl;\
+    
+    cout << " " << endl;
+
+    cout << "Reading data from Users file ..." << endl;
+    int numUsers = readUsers(users);
+    cout << "-> Data for " << numUsers << " user(s) read." << endl;
+
+	cout << " " << endl;
+
+
+    cout << "Reading data from ViewHistory file ..." << endl;
+    int numViews = readViewHistory(history);
+    cout << "-> Data for " << numViews << " view histories read." << endl;
+    
+    cout << " " << endl;
+
+
+    cout << "Processing commands from Command file ..." << endl;
+    
+    cout << " " << endl;
+
+
+    ifstream infile("Commands.txt");
+    if (!infile.is_open()) {
+        cout << "[Error] Could not open Commands.txt. Aborting ..." << endl;
+        
+        cout << " " << endl;
+
+        return 1;
+    }
+
+    int command;
+    while (infile >> command) {
+        if (command == 11) {
+            cout << "--> Processing command: 11 - Movie Details ..." << endl;
+            
+            cout << " " << endl;
+
+            
+            string movieID;
+            infile >> movieID;
+            int index = findMovie(movies, numMovies, movieID);
+            if (index != -1) {
+                displayMovie(movies[index]);
+            } else {
+                cout << "[Error] Movie " << movieID << " does not exist." << endl;
+                cout << " " << endl;
+            }
+        } else if (command == 12) {
+            cout << "--> Processing command: 12 - User Details ..." << endl;
+            
+            cout << " " << endl;
+
+            
+            string userName;
+            infile >> userName;
+            int index = findUser(users, numUsers, userName);
+            if (index != -1) {
+                displayUser(users[index]);
+            } else {
+                cout << "[Error] User " << userName << " does not exist." << endl;
+                cout << " " << endl;
+            }
+        } else if (command == 21) {
+            cout << "--> Processing command: 21 - User's Watched Movies ..." << endl;
+            
+            cout << " " << endl;
+            
+            string userName;
+            infile >> userName;
+            int index = findUser(users, numUsers, userName);
+            if (index != -1) {
+                displayUserHistory(history, numViews, users[index].userID);
+            } else {
+                cout << "[Error] User " << userName << " does not exist." << endl;
+                cout << " " << endl;
+            }
+        } else if (command == 22) {
+            cout << "--> Processing command: 22 - Most Watched Movie ..." << endl;
+            
+            cout << " " << endl;
+
+            
+            displayMostWatchedMovie(history, numViews, movies, numMovies);
+        } else if (command == 23) {
+            cout << "--> Processing command: 23 - All Unwatched Movies ..." << endl;
+            cout << " " << endl;
+            
+            cout << " " << endl;
+            cout << "========================================" << endl;
+            cout << "All Unwatched Movies:" << endl;
+            cout << "========================================" << endl;\
+            cout << " " << endl;
+            for (int i = 0; i < numMovies; i++) {
+                if (!findMovieView(history, numViews, movies[i].movieID)) {
+                    displayMovie(movies[i]);
+                }
+            }
+            cout << "========================================" << endl;
+        } else if (command == 24) {
+            cout << "--> Processing command: 24 - Movies in a Certain Genre ..." << endl;
+            
+            cout << " " << endl;
+            
+            string genre;
+            infile >> genre;
+            displayMoviesGenre(movies, numMovies, genre);
+        } else if (command == 31) {
+            cout << "--> Processing command: 31 - All Ratings for Movie ..." << endl;
+            
+            cout << " " << endl;
+            
+            string movieID;
+            infile >> movieID;
+            displayMovieRatings(history, numViews, movieID);
+        } else if (command == 32) {
+            cout << "--> Processing command: 32 - All Ratings By User ..." << endl;
+            
+            cout << " " << endl;
+            
+            string userName;
+            infile >> userName;
+            int index = findUser(users, numUsers, userName);
+            if (index != -1) {
+                displayUserRatings(history, numViews, users[index].userID);
+            } else {
+                cout << "[Error] User " << userName << " does not exist." << endl;
+                cout << " " << endl;
+            }
+        } else if (command == 99) {
+            cout << "--> Processing command: 99 - End of Program ..." << endl;
+            
+            cout << " " << endl;
+            cout << "========================================" << endl;
+            cout << "End of Program." << endl;
+            cout << "========================================" << endl;
+            cout << " " << endl;
+            break;
+        } else {
+            cout << "[Error] Command " << command << " does not exist." << endl;
+        }
+    }
+
+    infile.close();
+    return 0;
+}
